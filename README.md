@@ -6,10 +6,10 @@
 
 ## 让 Agent 安装 Skill
 
-复制下面这段提示词，发给 Codex 或 Claude Code，即可让 Agent 安装 CLI 和对应的 Skill：
+复制下面这段提示词，发给你正在使用的 Agent。它会先识别自身支持的 Skill 格式与安装位置，再按对应方式安装；无需预先知道 Agent 的名称：
 
 ```text
-请帮我安装 UGCPlay 上传工具：从 https://github.com/stephen-a2z/ugcplay-skill 获取仓库，在本机全局安装 ugcplay CLI，并将仓库中的 skills/ugcplay-upload 安装到当前 Agent 对应的个人 Skill 目录（Codex 用 ~/.codex/skills/，Claude Code 用 ~/.claude/skills/）。先检查 Node.js 版本是否为 22 或更高；不要覆盖已有的同名 Skill，遇到时先告诉我。安装后运行 ugcplay --help 并确认 Skill 文件存在。最后告诉我是否需要重启或重新加载 Agent。此步骤只安装工具，不要登录或上传游戏。
+请帮我安装 UGCPlay 上传工具：从 https://github.com/stephen-a2z/ugcplay-skill 获取仓库，在本机全局安装 ugcplay CLI，并把 skills/ugcplay-upload 安装到当前 Agent 支持的用户级 Skill 目录。先检查 Node.js 版本是否为 22 或更高，并查明当前 Agent 的 Skill 安装格式、目录和加载方式；不要假设我是 Codex 或 Claude Code。如果当前 Agent 支持标准 Agent Skills 格式，直接使用仓库里的 Skill 文件；如果使用其他格式，先告诉我是否能兼容使用以及需要怎样转换，不要自行改写或安装到猜测的目录。不要覆盖已有的同名 Skill，遇到时先告诉我。安装后运行 ugcplay --help，并按当前 Agent 的方式确认 Skill 已被识别；最后告诉我是否需要重启或重新加载 Agent。此步骤只安装工具，不要登录或上传游戏。
 ```
 
 Agent 首次上传前，由用户运行 `ugcplay login` 完成浏览器授权；远程 Agent 可用 `ugcplay login --no-browser`，再由用户在自己的浏览器确认登录。
