@@ -5,7 +5,7 @@ description: Upload static HTML games, ZIP exports, or build directories to a UG
 
 # UGCPlay uploads
 
-Use the installed `ugcplay` CLI (Node 22+). If it is missing and the standalone ugcplay-skill checkout is available, install with `npm install -g --install-links <checkout>`, or run `npm ci --ignore-scripts` in that checkout and then `node <checkout>/bin/ugcplay.mjs`. The skill is also bundled in the CLI npm package. Do not assume a package has been published or require the platform source repository. Do not substitute hosting providers or deploy the platform itself. Check `ugcplay --help` for the installed version's interface.
+Use the installed `ugcplay` CLI (Node 22+). If it is missing, install it with `npm install -g git+https://github.com/stephen-a2z/ugcplay-skill.git` within the user’s authorized installation scope; otherwise explain the missing dependency. An existing standalone checkout also supports `npm install -g --install-links <checkout>`, or `npm ci --ignore-scripts` followed by `node <checkout>/bin/ugcplay.mjs`. Installing this Skill alone does not install the CLI. Do not assume the npm package has been published or require the platform source repository. Do not substitute hosting providers or deploy the platform itself. Check `ugcplay --help` for the installed version's interface.
 
 Resolve the target UGCPlay site from the user's request or existing `UGCPLAY_SITE`; ask if it is unknown. Pass `--site <origin>` explicitly when switching sites. Credentials are site-specific. Use HTTPS except for local development.
 

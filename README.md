@@ -4,25 +4,35 @@
 
 Agent 会根据项目内容准备标题、描述和标签，并保留用户明确指定的字段。CLI 支持浏览器登录、上传预检和 JSON 输出，适合人工操作与自动化。使用 Node.js 22+，采用 [MIT 许可证](LICENSE)。
 
-## 快速开始：交给 Agent
+## 快速安装
 
-### 1. 安装工具和 Skill
+准备 Node.js **22.20+**、npm 和 Git，在终端执行两条命令：
 
-将下面整段提示词复制给有终端和文件操作能力的 Agent：
-
-```text
-请为当前 Agent 安装 UGCPlay 上传 CLI 和 Skill。
-仓库：https://github.com/stephen-a2z/ugcplay-skill
-
-1. 检查 Node.js 22+、npm 和 Git 是否可用，再获取仓库；已有本项目的安装时先检查并复用。
-2. 在仓库目录执行 npm install -g --install-links .，安装 ugcplay 命令。
-3. 根据当前 Agent 的文档或配置确认用户级 Skill 安装位置，将仓库中的 skills/ugcplay-upload 安装到该位置。保留原始 SKILL.md；如有同名 Skill，先比较来源和内容，避免覆盖用户修改。
-4. 运行 ugcplay --help，检查 Skill 文件与当前 Agent 的加载方式，报告安装位置及是否需要重载或新建会话。
-
-若环境无法执行安装，或当前 Agent 不支持此 Skill 格式，请说明具体原因和可行的下一步。安装完成即可，此次不要登录或上传游戏。
+```bash
+npm install -g git+https://github.com/stephen-a2z/ugcplay-skill.git
+npx skills@latest add stephen-a2z/ugcplay-skill --skill ugcplay-upload -g
 ```
 
-Skill 使用 `SKILL.md` 格式。不同 Agent 的安装路径和加载方式可能不同；上面的提示词会让 Agent 根据自身环境确认，手动安装可参考[下面的示例](#手动安装-skill)。
+第一条安装上传命令 `ugcplay`；第二条安装 Skill，按提示选择要使用的 Agent。`-g` 表示用户级安装，去掉它则安装到当前项目。无需手动克隆仓库或复制 Skill 目录。[Skills 安装器](https://github.com/vercel-labs/skills) 负责发现 Skill 和选择各 Agent 对应的位置；CLI 与 Skill 需要分别安装。
+
+安装后运行 `ugcplay --help`，再按 Agent 提示重新加载或新建会话。CLI 本身支持 Node.js 22+；这里的 22.20+ 要求来自最新版 Skills 安装器。npm 包 `@ugcplay/cli` 尚未发布，上面的 CLI 命令直接从 GitHub 安装。
+
+## 交给 Agent 安装和上传
+
+### 1. 安装提示词
+
+也可以把这段提示词复制给有终端和文件操作能力的 Agent：
+
+```text
+请安装 UGCPlay 上传 CLI 和 ugcplay-upload Skill：
+
+npm install -g git+https://github.com/stephen-a2z/ugcplay-skill.git
+npx skills@latest add stephen-a2z/ugcplay-skill --skill ugcplay-upload -g
+
+先检查 Node.js 22.20+、npm 和 Git。只选择当前 Agent 作为 Skill 安装目标；根据安装器帮助使用相应的 --agent 参数，必要时使用非交互选项。已有安装先检查复用，保留用户修改。完成后确认 ugcplay --help 可运行、Skill 已放到受支持的位置，并告知是否需要新建会话。遇到权限或兼容性问题时说明原因和下一步。此次只安装，不登录或上传。
+```
+
+若安装器不支持当前 Agent，可按其官方安装方式使用仓库中的 `skills/ugcplay-upload/SKILL.md`，参考[手动安装示例](#手动安装-skill)。
 
 ### 2. 上传游戏
 
@@ -39,33 +49,41 @@ Skill 使用 `SKILL.md` 格式。不同 Agent 的安装路径和加载方式可�
 
 **登录规则：文件上传和所有作品更新需要登录；URL 新作品可以免登录。** Agent 可启动 `ugcplay login --site <站点> --no-browser` 并等待用户确认。匿名 URL 的 `claimToken` 应私下保存，用于日后认领。
 
-[手动安装 CLI](#手动安装-cli-与登录) · [手动安装 Skill](#手动安装-skill) · [上传参数](#上传和更新) · [凭据与 CI](#凭据与登出) · [开发](#开发与验证)
+[源码安装 CLI](#源码安装-cli) · [登录](#浏览器登录) · [手动安装 Skill](#手动安装-skill) · [上传参数](#上传和更新) · [凭据与 CI](#凭据与登出) · [开发](#开发与验证)
 
-## 手动安装 CLI 与登录
+## 源码安装 CLI
 
-从 GitHub 获取源码并全局安装（当前 npm 包尚未发布）：
+开发或需要本地修改时，可以克隆仓库安装：
 
 ```bash
 git clone https://github.com/stephen-a2z/ugcplay-skill.git
 cd ugcplay-skill
 npm install -g --install-links .
-export UGCPLAY_SITE=https://ugcplay.dev
-ugcplay login
-ugcplay whoami --json
+ugcplay --help
 ```
 
-PowerShell 中设置站点变量的写法：
+也可先运行 `npm ci --ignore-scripts`，再用 `node bin/ugcplay.mjs --help`。执行 `npm pack` 可生成 `ugcplay-cli-0.1.0.tgz`，其他用户可 `npm install -g /path/to/ugcplay-cli-0.1.0.tgz`，包中同时包含 Skill。早期本地版本升级后，请使用新命令重新登录。
+
+## 浏览器登录
+
+无需配置环境变量即可登录指定站点：
+
+```bash
+ugcplay login --site https://ugcplay.dev
+ugcplay whoami --site https://ugcplay.dev --json
+```
+
+后续命令继续使用 `--site`，或为当前终端会话配置默认站点：
+
+```bash
+# macOS / Linux
+export UGCPLAY_SITE=https://ugcplay.dev
+```
 
 ```powershell
-git clone https://github.com/stephen-a2z/ugcplay-skill.git
-Set-Location ugcplay-skill
-npm install -g --install-links .
+# PowerShell
 $env:UGCPLAY_SITE = "https://ugcplay.dev"
-ugcplay login
-ugcplay whoami --json
 ```
-
-也可先运行 `npm ci --ignore-scripts`，再用 `node bin/ugcplay.mjs --help`。执行 `npm pack --pack-destination /tmp` 生成独立 tgz，其他用户可 `npm install -g /path/to/ugcplay-cli-0.1.0.tgz`，包中同时包含 skill。npm 包名为 `@ugcplay/cli`，命令名为 `ugcplay`，环境变量统一为 `UGCPLAY_*`。早期本地版本升级后，请使用新命令重新登录。
 
 `login` 显示授权链接和核对码，并尝试打开浏览器。用户在浏览器通过已有 GitHub 登录，核对代码后点击确认，终端自动完成登录。远程 Agent/SSH 使用 `ugcplay login --no-browser`，用户在自己的浏览器打开链接即可；不需要把 GitHub 密码、Cookie 或 OAuth 密钥交给 Agent。登录链接 10 分钟有效，CLI 凭据 30 天有效。
 
@@ -177,7 +195,7 @@ cp -R "$(npm root -g)/@ugcplay/cli/skills/ugcplay-upload" ~/.codex/skills/
 
 Claude Code 可使用 `~/.claude/skills/`。CLI 安装与 Skill 安装是两个步骤；全局 npm 包包含 Skill 文件，但不会自动将它注册到每种 Agent。复制后按当前 Agent 的方式重新加载或新建会话。
 
-随后使用[快速开始中的上传提示词](#2-上传游戏)。
+随后使用[上传提示词](#2-上传游戏)。
 
 Agent 会读取 README、项目元数据、HTML 和必要的玩法代码，补齐缺失的标题、简洁描述和 1–3 个相关标签；使用用户的语言，保留用户明确指定的字段。Agent 会将相同的 `--summary` 和 `--tags` 用于 dry-run 与正式提交，已有上传授权不增加描述确认步骤。对于 ZIP 或 URL，也会依据实际内容准备元数据；只有无法了解玩法时才补充询问，不编造功能。包限制不会因为 Agent 上传而放宽。
 
@@ -199,4 +217,4 @@ npm run test:package
 
 CLI 的上传限制是公开协议的本地快照；服务端仍是最终校验来源。升级服务端限制时同步 `lib/policy.mjs`、元数据校验、文档与两端契约测试。
 
-源码已在 [GitHub](https://github.com/stephen-a2z/ugcplay-skill) 公开；npm 包尚未发布，目前请从源码或本地 tgz 安装。运行时仅依赖 `fflate`，无需主站源码、Cloudflare CLI 或数据库权限。问题与建议可提交到 [Issues](https://github.com/stephen-a2z/ugcplay-skill/issues)。
+源码已在 [GitHub](https://github.com/stephen-a2z/ugcplay-skill) 公开；npm 包尚未发布，目前可从 GitHub 直接安装，也支持源码或本地 tgz 安装。运行时仅依赖 `fflate`，无需主站源码、Cloudflare CLI 或数据库权限。问题与建议可提交到 [Issues](https://github.com/stephen-a2z/ugcplay-skill/issues)。
