@@ -1,20 +1,47 @@
 # UGCPlay 上传 CLI 与 Agent Skill
 
-独立开源的 Node.js 22+ 工具，让 Codex、Claude Code、用户或 CI 将静态游戏上传到 UGCPlay 或兼容的自托管站点。运行时仅依赖 `fflate`，无需主站源码、Cloudflare CLI 或数据库权限。许可证为 [MIT](LICENSE)。
+让 Agent 把 HTML、ZIP 或静态构建目录上传到 [UGCPlay](https://ugcplay.dev)，也支持提交已有游戏 URL 和更新作品。
 
-配套 Agent skill 会读取项目说明和实际玩法，自动补齐缺失的描述与标签，再通过 CLI 上传。用户明确提供的字段优先；无需额外模型 API Key。直接使用 CLI 时，通过 `--summary` 和 `--tags` 传入元数据，CLI 本身不调用模型。
+Agent 会根据项目内容准备标题、描述和标签，并保留用户明确指定的字段。CLI 支持浏览器登录、上传预检和 JSON 输出，适合人工操作与自动化。使用 Node.js 22+，采用 [MIT 许可证](LICENSE)。
 
-## 让 Agent 安装 Skill
+## 快速开始：交给 Agent
 
-复制下面这段提示词，发给你正在使用的 Agent。它会先识别自身支持的 Skill 格式与安装位置，再按对应方式安装；无需预先知道 Agent 的名称：
+### 1. 安装工具和 Skill
+
+将下面整段提示词复制给有终端和文件操作能力的 Agent：
 
 ```text
-请帮我安装 UGCPlay 上传工具：从 https://github.com/stephen-a2z/ugcplay-skill 获取仓库，在本机全局安装 ugcplay CLI，并把 skills/ugcplay-upload 安装到当前 Agent 支持的用户级 Skill 目录。先检查 Node.js 版本是否为 22 或更高，并查明当前 Agent 的 Skill 安装格式、目录和加载方式；不要假设我是 Codex 或 Claude Code。如果当前 Agent 支持标准 Agent Skills 格式，直接使用仓库里的 Skill 文件；如果使用其他格式，先告诉我是否能兼容使用以及需要怎样转换，不要自行改写或安装到猜测的目录。不要覆盖已有的同名 Skill，遇到时先告诉我。安装后运行 ugcplay --help，并按当前 Agent 的方式确认 Skill 已被识别；最后告诉我是否需要重启或重新加载 Agent。此步骤只安装工具，不要登录或上传游戏。
+请为当前 Agent 安装 UGCPlay 上传 CLI 和 Skill。
+仓库：https://github.com/stephen-a2z/ugcplay-skill
+
+1. 检查 Node.js 22+、npm 和 Git 是否可用，再获取仓库；已有本项目的安装时先检查并复用。
+2. 在仓库目录执行 npm install -g --install-links .，安装 ugcplay 命令。
+3. 根据当前 Agent 的文档或配置确认用户级 Skill 安装位置，将仓库中的 skills/ugcplay-upload 安装到该位置。保留原始 SKILL.md；如有同名 Skill，先比较来源和内容，避免覆盖用户修改。
+4. 运行 ugcplay --help，检查 Skill 文件与当前 Agent 的加载方式，报告安装位置及是否需要重载或新建会话。
+
+若环境无法执行安装，或当前 Agent 不支持此 Skill 格式，请说明具体原因和可行的下一步。安装完成即可，此次不要登录或上传游戏。
 ```
 
-Agent 首次上传前，由用户运行 `ugcplay login` 完成浏览器授权；远程 Agent 可用 `ugcplay login --no-browser`，再由用户在自己的浏览器确认登录。
+Skill 使用 `SKILL.md` 格式。不同 Agent 的安装路径和加载方式可能不同；上面的提示词会让 Agent 根据自身环境确认，手动安装可参考[下面的示例](#手动安装-skill)。
 
-## 安装与登录
+### 2. 上传游戏
+
+安装完成并按需重新加载 Agent 后，在游戏项目中发送：
+
+```text
+使用 ugcplay-upload Skill，把当前项目的 dist 目录上传到 https://ugcplay.dev。
+请根据项目的实际玩法补齐缺失的标题、描述和 1–3 个标签，保留我已指定的内容。
+先做 dry-run，检查通过后正式上传，最后给我分享链接和审核状态。
+需要登录时，请启动浏览器授权流程并告诉我链接和核对码，由我在浏览器确认。
+```
+
+将 `dist` 换成实际构建目录、HTML、ZIP 或 HTTPS 游戏 URL；更新作品时再提供作品 ID 和版本说明。Agent 使用项目 README、HTML 和必要的玩法代码作为生成依据，无法判断玩法时会询问。元数据由 Agent 准备，无需额外模型 API Key；CLI 本身不调用模型。
+
+**登录规则：文件上传和所有作品更新需要登录；URL 新作品可以免登录。** Agent 可启动 `ugcplay login --site <站点> --no-browser` 并等待用户确认。匿名 URL 的 `claimToken` 应私下保存，用于日后认领。
+
+[手动安装 CLI](#手动安装-cli-与登录) · [手动安装 Skill](#手动安装-skill) · [上传参数](#上传和更新) · [凭据与 CI](#凭据与登出) · [开发](#开发与验证)
+
+## 手动安装 CLI 与登录
 
 从 GitHub 获取源码并全局安装（当前 npm 包尚未发布）：
 
@@ -56,7 +83,22 @@ ugcplay link https://trusted.example/game/ --title "外链游戏" --json
 ugcplay link https://trusted.example/game.html --title "镜像作品" --mirror --json
 ```
 
-`--title` 必填，长度为 1–60 个字符；`--summary` 可选，最多 500 个字符；`--tags` 接受逗号分隔的最多 3 个标签，每个最多 12 个字符，因此单个标签不能含逗号。更新时 `--version-note` 必填，最多 200 个字符；`--game-id` 是 8 位作品 ID。`--entry` 指定包内 HTML 入口；省略时优先选 `index.html`，否则仅在包内恰有一个 HTML 文件时自动选择。`--cover` 必须指向包内的 PNG/JPG/WebP/GIF 图片。
+| 参数 | 用途与限制 |
+| --- | --- |
+| `--title` | 必填，1–60 个字符 |
+| `--summary` | 可选，最多 500 个字符 |
+| `--tags` | 可选，用英文逗号分隔，最多 3 个，每个最多 12 个字符；单个标签不能含逗号 |
+| `--entry` | 文件包内的 HTML 入口；默认选根目录 `index.html`，否则只在恰有一个 HTML 时自动选择 |
+| `--cover` | 文件包内的 PNG/JPG/WebP/GIF 图片路径 |
+| `--game-id` | 更新已有作品，使用首次上传返回的 8 位 `id` |
+| `--version-note` | 更新时必填，最多 200 个字符 |
+| `--mirror` | 仅 `link`，使用站点的 HTML 镜像通道 |
+| `--guest` | 仅 `link`，即使已登录也强制匿名提交 |
+| `--dry-run` | 本地预检，不提交、不要求登录 |
+| `--site` | 目标站点，优先于 `UGCPLAY_SITE` |
+| `--json` | 单行 JSON 输出，适合 Agent 和脚本 |
+
+字符限制按 JavaScript 字符串长度（UTF-16 单元）计算；部分 emoji 占两个单元。`--entry` 和 `--cover` 仅用于文件上传。
 
 目录只应包含可发布的静态构建文件。隐藏文件和 macOS 元数据会跳过；符号链接、路径穿越、不支持的类型、重复 ZIP 路径、CRC 不匹配、加密 ZIP、ZIP64 和多卷包会拒绝。ZIP 中的路径保持原样，包裹目录里的入口可通过 `--entry game/index.html` 指定。上限与当前站点一致：200 个文件、单文件 50MB、总量 100MB；后端仍执行权限、配额、可信域名及审核规则。
 
@@ -108,9 +150,9 @@ ugcplay logout
 
 CI 可通过秘密环境变量 `UGCPLAY_TOKEN` 提供已授权的专用凭据，并显式配置 `UGCPLAY_SITE`。凭据只发往所选站点；设置此变量时 `logout` 会提示用 `tokens revoke` 撤销，而不会误操作本地另一个登录。不要在命令行参数或日志中放 token。
 
-## Agent Skill
+## 手动安装 Skill
 
-仓库提供 `skills/ugcplay-upload/SKILL.md`。从仓库根目录安装到所用 Agent 的 skill 目录，例如：
+仓库提供 [skills/ugcplay-upload/SKILL.md](skills/ugcplay-upload/SKILL.md)。从仓库根目录复制到当前 Agent 支持的用户级 Skill 目录。以下以 Codex 为例，其他 Agent 请使用各自文档中规定的路径：
 
 ```bash
 mkdir -p ~/.codex/skills
@@ -133,9 +175,9 @@ mkdir -p ~/.codex/skills
 cp -R "$(npm root -g)/@ugcplay/cli/skills/ugcplay-upload" ~/.codex/skills/
 ```
 
-Claude Code 使用 `~/.claude/skills/`。先安装 CLI，再将 skill 放入所用 Agent 的目录。
+Claude Code 可使用 `~/.claude/skills/`。CLI 安装与 Skill 安装是两个步骤；全局 npm 包包含 Skill 文件，但不会自动将它注册到每种 Agent。复制后按当前 Agent 的方式重新加载或新建会话。
 
-然后告诉 Agent：「使用 ugcplay-upload skill，把这个项目的 dist 上传到 https://ugcplay.dev，自动配好描述和标签」。首次使用由用户完成浏览器登录。
+随后使用[快速开始中的上传提示词](#2-上传游戏)。
 
 Agent 会读取 README、项目元数据、HTML 和必要的玩法代码，补齐缺失的标题、简洁描述和 1–3 个相关标签；使用用户的语言，保留用户明确指定的字段。Agent 会将相同的 `--summary` 和 `--tags` 用于 dry-run 与正式提交，已有上传授权不增加描述确认步骤。对于 ZIP 或 URL，也会依据实际内容准备元数据；只有无法了解玩法时才补充询问，不编造功能。包限制不会因为 Agent 上传而放宽。
 
@@ -144,7 +186,6 @@ Agent 会读取 README、项目元数据、HTML 和必要的玩法代码，补�
 服务端需兼容设备授权接口 `/api/auth/cli/*` 和现有上传接口。旧版主站先应用其自身仓库中的 `0025_cli_auth.sql` 迁移，并按主站部署流程升级主站 Worker。数据库迁移、主站和游戏 Worker 由平台项目维护，本项目仅分发客户端。
 
 本地联调：另行启动主站项目的开发服务，先在浏览器使用「测试登录」，再运行 `ugcplay login --site http://localhost:5173`（端口以实际服务为准），授权页会复用该浏览器会话。CLI 不提供远程开发登录捷径。
-
 
 ## 开发与验证
 
@@ -158,4 +199,4 @@ npm run test:package
 
 CLI 的上传限制是公开协议的本地快照；服务端仍是最终校验来源。升级服务端限制时同步 `lib/policy.mjs`、元数据校验、文档与两端契约测试。
 
-当前项目未配置远端仓库，也未发布到 npm；公开发布时需确认 `@ugcplay/cli` scope 的发布权限，再补全真实仓库地址。
+源码已在 [GitHub](https://github.com/stephen-a2z/ugcplay-skill) 公开；npm 包尚未发布，目前请从源码或本地 tgz 安装。运行时仅依赖 `fflate`，无需主站源码、Cloudflare CLI 或数据库权限。问题与建议可提交到 [Issues](https://github.com/stephen-a2z/ugcplay-skill/issues)。
