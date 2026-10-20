@@ -1,0 +1,30 @@
+{
+  "name": "@gamehub/cli",
+  "version": "0.1.0",
+  "description": "Upload games to UGCPlay with an agent skill, browser login and JSON output",
+  "type": "module",
+  "bin": {
+    "gamehub": "bin/gamehub.mjs"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "skills/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "test:package": "node scripts/verify-package.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
