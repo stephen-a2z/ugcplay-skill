@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { zipSync } from 'fflate';
 
-const bin = fileURLToPath(new URL('../bin/gamehub.mjs', import.meta.url));
+const bin = fileURLToPath(new URL('../bin/ugcplay.mjs', import.meta.url));
 function run(args, env) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [bin, ...args], { env: { ...process.env, ...env } });
@@ -42,7 +42,7 @@ test('all submission channels send the same prepared summary and tags as dry-run
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const site = `http://127.0.0.1:${server.address().port}`;
-  const env = { GAMEHUB_TOKEN: 'ghu_' + 'a'.repeat(43), GAMEHUB_CONFIG_DIR: join(dir, 'credentials') };
+  const env = { UGCPLAY_TOKEN: 'ghu_' + 'a'.repeat(43), UGCPLAY_CONFIG_DIR: join(dir, 'credentials') };
   const title = '小猫跳跳';
   const summary = '控制小猫跳过障碍，收集金币并争取更高分。';
   const tags = ['平台跳跃', '休闲'];

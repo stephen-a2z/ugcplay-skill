@@ -6,9 +6,9 @@
 
 ## 已核实的现状
 
-- `cli/` 为 Node.js 22+ ESM 包，命令名为 `gamehub`，包名为 `@gamehub/cli`，仅依赖 `fflate`。
+- `cli/` 为 Node.js 22+ ESM 包，命令名为 `ugcplay`，包名为 `@ugcplay/cli`，仅依赖 `fflate`。
 - 支持浏览器授权、HTML/ZIP/静态目录上传、版本更新、URL 登记、游客提交、dry-run 和 JSON 输出。
-- `skills/gamehub-upload/SKILL.md` 指导 Agent 使用 CLI，但没有要求自动生成描述与标签。
+- `skills/ugcplay-upload/SKILL.md` 指导 Agent 使用 CLI，但没有要求自动生成描述与标签。
 - CLI 和服务端都已有 `summary` 与 `tags` 参数；描述最多 500 字符，标签最多 3 个，每个最多 12 字符。
 - `tests/cli.test.mjs` 包含客户端集成测试，以及依赖主站源码和 esbuild 的限制一致性测试。迁移时必须解除这项源码依赖。
 - 主站工作区检查时没有未提交修改。当前独立项目目录为空，没有 Git 仓库。
@@ -24,8 +24,8 @@
 ## 独立项目
 
 - 将原 `cli/bin`、`cli/lib` 提升至新项目根目录的 `bin/`、`lib/`。
-- 保留 `skills/gamehub-upload/` 作为可复制安装的 Agent skill。
-- 保留现有命令与环境变量，避免用户已有脚本失效。包名暂沿用 `@gamehub/cli`，公开发布前再确认 npm scope 的所有权。
+- 保留 `skills/ugcplay-upload/` 作为可复制安装的 Agent skill。
+- 对外名称统一为 UGCPlay：包名 `@ugcplay/cli`、命令 `ugcplay`、环境变量 `UGCPLAY_*`。公开发布前确认 npm scope 的所有权；早期本地版本升级后使用新命令重新登录。
 - 提供根 `package.json`、锁文件、README、`.gitignore`、客户端测试和 CI；npm 包同时包含 CLI 与 skill。
 - 开源许可证建议使用 MIT，作为本方案待确认的一部分；不得搬入站点密钥、环境文件、数据库、构建产物或 node_modules。
 - 安装文档提供从本地 checkout 安装和打包安装的真实命令；不虚构 GitHub 地址或宣称已发布 npm。
@@ -42,7 +42,7 @@
 
 ## 主站清理
 
-- 在新项目客户端测试和打包验证通过后，移除主站 `cli/` 与 `skills/gamehub-upload/`，清除空目录。
+- 在新项目客户端测试和打包验证通过后，移除主站 `cli/` 与 `skills/ugcplay-upload/`，清除空目录。
 - 迁移客户端行为测试；将原限制一致性测试改为主站侧的接口/限制契约检查，避免依赖已移除路径。具体断言以实际接口行为为准，不引入跨仓库源码依赖。
 - 更新主站 README 的安装说明，说明 CLI 和 skill 已拆分，并以本地 sibling 项目作为当前真实位置；待用户提供公开地址后再替换链接。
 - 保留 `worker/routes/cli-auth.ts`、授权辅助代码、数据库迁移、上传接口及服务端测试。它们是独立客户端运行所需的服务端能力。

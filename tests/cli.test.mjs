@@ -8,10 +8,10 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { zipSync } from 'fflate';
-const bin = fileURLToPath(new URL('../bin/gamehub.mjs', import.meta.url));
+const bin = fileURLToPath(new URL('../bin/ugcplay.mjs', import.meta.url));
 async function run(args, env = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [bin, ...args], { env: { ...process.env, GAMEHUB_TOKEN: '', ...env } });
+    const child = spawn(process.execPath, [bin, ...args], { env: { ...process.env, UGCPLAY_TOKEN: '', ...env } });
     let out = '', err = '';
     child.stdout.on('data', b => out += b); child.stderr.on('data', b => err += b);
     child.on('error', reject); child.on('close', code => resolve({ code, out, err }));
@@ -27,7 +27,7 @@ test('CLI is independently runnable and validates arguments without network', as
 });
 test('files: HTML, directory, ZIP, unsupported files, symlinks and traversal', async () => {
   const { collectFiles } = await import('../lib/files.mjs');
-  const dir = await mkdtemp(join(tmpdir(), 'gamehub-files-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ugcplay-files-'));
   try {
     await writeFile(join(dir, 'index.html'), 'hello');
     await mkdir(join(dir, 'assets')); await writeFile(join(dir, 'assets/main.js'), 'alert(1)');
@@ -51,7 +51,7 @@ test('files: HTML, directory, ZIP, unsupported files, symlinks and traversal', a
 });
 test('ZIP rejects oversized declarations and corrupted archives before decompression', async () => {
   const { collectFiles } = await import('../lib/files.mjs');
-  const dir = await mkdtemp(join(tmpdir(), 'gamehub-zip-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ugcplay-zip-'));
   try {
     const zip = zipSync({ 'index.html': new Uint8Array([1]) });
     const central = Buffer.from(zip).indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
@@ -71,7 +71,7 @@ test('ZIP rejects oversized declarations and corrupted archives before decompres
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 test('creation is never retried, finalize failures retain upload ID without cancel, and redirects are rejected', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'gamehub-failure-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ugcplay-failure-'));
   const file = join(dir, 'index.html'); await writeFile(file, 'hello');
   let mode = 'init'; const calls = [];
   const server = createServer(async (req, res) => {
@@ -85,7 +85,7 @@ test('creation is never retried, finalize failures retain upload ID without canc
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const site = `http://127.0.0.1:${server.address().port}`;
   const common = ['--site', site, '--title', 'Game', '--json'];
-  const env = { GAMEHUB_TOKEN: 'ghu_' + 'b'.repeat(43), GAMEHUB_CONFIG_DIR: join(dir, 'config') };
+  const env = { UGCPLAY_TOKEN: 'ghu_' + 'b'.repeat(43), UGCPLAY_CONFIG_DIR: join(dir, 'config') };
   try {
     assert.equal((await run(['upload', file, ...common], env)).code, 1);
     assert.equal(calls.filter(p => p === '/api/upload/init').length, 1);
@@ -103,7 +103,7 @@ test('creation is never retried, finalize failures retain upload ID without canc
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true, force: true }); }
 });
 test('actual CLI commands: login saves private credentials; upload/update/link, retries and logout', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'gamehub-cli-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ugcplay-cli-'));
   const config = join(dir, 'config');
   const file = join(dir, 'index.html'); await writeFile(file, 'hello');
   const calls = []; let puts = 0;
@@ -131,7 +131,7 @@ test('actual CLI commands: login saves private credentials; upload/update/link, 
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const site = `http://127.0.0.1:${server.address().port}`;
-  const args = ['--site', site, '--json']; const env = { GAMEHUB_CONFIG_DIR: config };
+  const args = ['--site', site, '--json']; const env = { UGCPLAY_CONFIG_DIR: config };
   try {
     const login = await run(['login', '--no-browser', ...args], env);
     assert.equal(login.code, 0, login.err + login.out); assert.equal(JSON.parse(login.out).user.login, 'creator');

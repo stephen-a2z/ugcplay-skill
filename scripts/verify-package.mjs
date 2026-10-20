@@ -20,7 +20,7 @@ function run(command, args, cwd) {
 try {
   const [packed] = JSON.parse(npm(['pack', '--json', '--ignore-scripts', '--pack-destination', temporary], root));
   const files = packed.files.map(file => file.path);
-  for (const required of ['bin/gamehub.mjs', 'lib/commands.mjs', 'skills/gamehub-upload/SKILL.md', 'LICENSE', 'README.md']) {
+  for (const required of ['bin/ugcplay.mjs', 'lib/commands.mjs', 'skills/ugcplay-upload/SKILL.md', 'LICENSE', 'README.md']) {
     assert.ok(files.includes(required), `Package missing ${required}`);
   }
   assert.ok(files.every(path => !/^(tests|docs|scripts|node_modules)\//.test(path)), 'Package must contain only distributable client files');
@@ -28,19 +28,19 @@ try {
   const prefix = join(temporary, 'install');
   await mkdir(prefix);
   npm(['install', '--prefix', prefix, '--ignore-scripts', '--no-audit', '--no-fund', join(temporary, packed.filename)], temporary);
-  const installed = join(prefix, 'node_modules', '@gamehub', 'cli');
-  const executable = join(installed, 'bin', 'gamehub.mjs');
-  const linkedBin = join(prefix, 'node_modules', '.bin', process.platform === 'win32' ? 'gamehub.cmd' : 'gamehub');
+  const installed = join(prefix, 'node_modules', '@ugcplay', 'cli');
+  const executable = join(installed, 'bin', 'ugcplay.mjs');
+  const linkedBin = join(prefix, 'node_modules', '.bin', process.platform === 'win32' ? 'ugcplay.cmd' : 'ugcplay');
   await access(linkedBin);
-  assert.match(npm(['exec', '--prefix', prefix, '--offline', '--', 'gamehub', '--help'], temporary), /gamehub upload/);
+  assert.match(npm(['exec', '--prefix', prefix, '--offline', '--', 'ugcplay', '--help'], temporary), /ugcplay upload/);
   const html = join(temporary, 'index.html');
   await writeFile(html, '<title>Cat Jump</title><h1>Jump and collect coins</h1>');
   const result = JSON.parse(run(process.execPath, [executable, 'upload', html, '--site', 'https://ugcplay.dev', '--title', 'Cat Jump', '--summary', 'Jump over obstacles and collect coins.', '--tags', 'platformer,casual', '--dry-run', '--json'], temporary));
   assert.equal(result.summary, 'Jump over obstacles and collect coins.');
   assert.deepEqual(result.tags, ['platformer', 'casual']);
   assert.equal(result.entry, 'index.html');
-  const skill = await readFile(join(installed, 'skills', 'gamehub-upload', 'SKILL.md'), 'utf8');
-  assert.match(skill, /^name: gamehub-upload$/m);
+  const skill = await readFile(join(installed, 'skills', 'ugcplay-upload', 'SKILL.md'), 'utf8');
+  assert.match(skill, /^name: ugcplay-upload$/m);
   // Run the full CLI contract suite against the installed tarball from outside both repositories.
   await cp(join(root, 'tests'), join(installed, 'tests'), { recursive: true });
   const tests = (await readdir(join(installed, 'tests'))).filter(name => name.endsWith('.test.mjs')).sort();

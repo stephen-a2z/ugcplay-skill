@@ -1,10 +1,10 @@
 {
-  "name": "@gamehub/cli",
+  "name": "@ugcplay/cli",
   "version": "0.1.0",
   "description": "Upload games to UGCPlay with an agent skill, browser login and JSON output",
   "type": "module",
   "bin": {
-    "gamehub": "bin/gamehub.mjs"
+    "ugcplay": "bin/ugcplay.mjs"
   },
   "files": [
     "bin/",

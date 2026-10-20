@@ -8,11 +8,11 @@ import { execute } from '../lib/commands.mjs';
 // Exercise the real command flow while controlling only the network boundary.
 test('rejects malformed session/completion responses without following undefined IDs', async () => {
   const originalFetch = globalThis.fetch;
-  const originalToken = process.env.GAMEHUB_TOKEN;
+  const originalToken = process.env.UGCPLAY_TOKEN;
   const dir = await mkdtemp(join(tmpdir(), 'ugcplay-response-'));
   const file = join(dir, 'index.html');
   await writeFile(file, 'Game');
-  process.env.GAMEHUB_TOKEN = 'ghu_' + 'a'.repeat(43);
+  process.env.UGCPLAY_TOKEN = 'ghu_' + 'a'.repeat(43);
   try {
     for (const command of ['upload', 'link']) {
       for (const bad of [{}, { id: null }, { id: 'upload12' }, [], null, 'not-an-object', { ok: false }]) {
@@ -60,7 +60,7 @@ test('rejects malformed session/completion responses without following undefined
     }
   } finally {
     globalThis.fetch = originalFetch;
-    if (originalToken === undefined) delete process.env.GAMEHUB_TOKEN; else process.env.GAMEHUB_TOKEN = originalToken;
+    if (originalToken === undefined) delete process.env.UGCPLAY_TOKEN; else process.env.UGCPLAY_TOKEN = originalToken;
     await rm(dir, { recursive: true, force: true });
   }
 });

@@ -9,8 +9,8 @@ import { saveCredential, readCredentials } from '../lib/credentials.mjs';
 const credential = i => ({ token: 'dummy-' + i, tokenId: 'dummy-id-' + i, expiresAt: Date.now() + 60000 });
 test('concurrent credential saves/deletions preserve other sites and legacy credentials', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'ugcplay-credentials-'));
-  const previous = process.env.GAMEHUB_CONFIG_DIR;
-  process.env.GAMEHUB_CONFIG_DIR = dir;
+  const previous = process.env.UGCPLAY_CONFIG_DIR;
+  process.env.UGCPLAY_CONFIG_DIR = dir;
   try {
     await Promise.all(Array.from({ length: 12 }, (_, i) => saveCredential(`https://site${i}.example`, credential(i))));
     assert.equal(Object.keys(await readCredentials()).length, 12);
@@ -18,7 +18,7 @@ test('concurrent credential saves/deletions preserve other sites and legacy cred
     const moduleUrl = new URL('../lib/credentials.mjs', import.meta.url).href;
     await Promise.all(Array.from({ length: 6 }, (_, i) => new Promise((resolve, reject) => {
       const code = `import {saveCredential} from ${JSON.stringify(moduleUrl)}; await saveCredential(${JSON.stringify(`https://child${i}.example`)},${JSON.stringify(credential(i))});`;
-      const child = spawn(process.execPath, ['--input-type=module', '-e', code], { env: { ...process.env, GAMEHUB_CONFIG_DIR: dir }, stdio: ['ignore', 'ignore', 'pipe'] });
+      const child = spawn(process.execPath, ['--input-type=module', '-e', code], { env: { ...process.env, UGCPLAY_CONFIG_DIR: dir }, stdio: ['ignore', 'ignore', 'pipe'] });
       let err = ''; child.stderr.on('data', b => err += b);
       child.on('error', reject); child.on('close', code => code === 0 ? resolve() : reject(new Error(err)));
     })));
@@ -41,7 +41,7 @@ test('concurrent credential saves/deletions preserve other sites and legacy cred
       if (process.platform !== 'win32') assert.equal((await stat(join(dir, name))).mode & 0o777, 0o600);
     }
   } finally {
-    if (previous === undefined) delete process.env.GAMEHUB_CONFIG_DIR; else process.env.GAMEHUB_CONFIG_DIR = previous;
+    if (previous === undefined) delete process.env.UGCPLAY_CONFIG_DIR; else process.env.UGCPLAY_CONFIG_DIR = previous;
     await rm(dir, { recursive: true, force: true });
   }
 });

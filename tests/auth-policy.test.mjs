@@ -8,10 +8,10 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { zipSync } from 'fflate';
 
-const bin = fileURLToPath(new URL('../bin/gamehub.mjs', import.meta.url));
+const bin = fileURLToPath(new URL('../bin/ugcplay.mjs', import.meta.url));
 function run(args, env) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [bin, ...args], { env: { ...process.env, GAMEHUB_TOKEN: '', ...env } });
+    const child = spawn(process.execPath, [bin, ...args], { env: { ...process.env, UGCPLAY_TOKEN: '', ...env } });
     let out = '', err = '';
     child.stdout.on('data', b => out += b);
     child.stderr.on('data', b => err += b);
@@ -23,7 +23,7 @@ function run(args, env) {
 test('all file inputs require login, reject --guest, and allow local dry-run', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'ugcplay-file-auth-'));
   const args = ['--site', 'http://127.0.0.1:1', '--title', 'Game', '--json'];
-  const env = { GAMEHUB_CONFIG_DIR: join(dir, 'config') };
+  const env = { UGCPLAY_CONFIG_DIR: join(dir, 'config') };
   try {
     const file = join(dir, 'game.html');
     const archive = join(dir, 'game.zip');
@@ -35,7 +35,7 @@ test('all file inputs require login, reject --guest, and allow local dry-run', a
       const anonymous = await run(['upload', input, ...args], env);
       assert.equal(anonymous.code, 1);
       assert.match(JSON.parse(anonymous.out).error, /Not logged in/);
-      const guest = await run(['upload', input, '--guest', ...args], { ...env, GAMEHUB_TOKEN: 'ghu_' + 'a'.repeat(43) });
+      const guest = await run(['upload', input, '--guest', ...args], { ...env, UGCPLAY_TOKEN: 'ghu_' + 'a'.repeat(43) });
       assert.equal(guest.code, 1);
       assert.match(JSON.parse(guest.out).error, /--guest is not supported by upload/);
       assert.equal((await run(['upload', input, '--dry-run', ...args], env)).code, 0);
@@ -65,7 +65,7 @@ test('URLs work without login, preserve account attribution, and never retry as 
   const site = `http://127.0.0.1:${server.address().port}`;
   const config = join(dir, 'config');
   const args = ['link', 'https://games.example/demo', '--site', site, '--title', 'Game', '--json'];
-  const env = { GAMEHUB_CONFIG_DIR: config };
+  const env = { UGCPLAY_CONFIG_DIR: config };
   const token = 'ghu_' + 'a'.repeat(43);
   try {
     for (const extra of [[], ['--mirror']]) {
@@ -102,12 +102,12 @@ test('URLs work without login, preserve account attribution, and never retry as 
     }
     for (const extra of [[], ['--guest']]) {
       calls.length = 0;
-      const result = await run([...args, ...extra], { ...env, GAMEHUB_TOKEN: token });
+      const result = await run([...args, ...extra], { ...env, UGCPLAY_TOKEN: token });
       assert.equal(result.code, 0, result.out + result.err);
       assert.equal(calls[0].body.guest, extra.includes('--guest'));
     }
     calls.length = 0; rejectAccount = true;
-    const rejected = await run(args, { ...env, GAMEHUB_TOKEN: token });
+    const rejected = await run(args, { ...env, UGCPLAY_TOKEN: token });
     assert.equal(rejected.code, 1); assert.equal(JSON.parse(rejected.out).status, 401);
     assert.deepEqual(calls.map(call => call.path), ['/api/upload/link']);
     assert.equal(calls[0].body.guest, false);
