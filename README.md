@@ -4,6 +4,16 @@
 
 配套 Agent skill 会读取项目说明和实际玩法，自动补齐缺失的描述与标签，再通过 CLI 上传。用户明确提供的字段优先；无需额外模型 API Key。直接使用 CLI 时，通过 `--summary` 和 `--tags` 传入元数据，CLI 本身不调用模型。
 
+## 让 Agent 安装 Skill
+
+复制下面这段提示词，发给 Codex 或 Claude Code，即可让 Agent 安装 CLI 和对应的 Skill：
+
+```text
+请帮我安装 UGCPlay 上传工具：从 https://github.com/stephen-a2z/ugcplay-skill 获取仓库，在本机全局安装 ugcplay CLI，并将仓库中的 skills/ugcplay-upload 安装到当前 Agent 对应的个人 Skill 目录（Codex 用 ~/.codex/skills/，Claude Code 用 ~/.claude/skills/）。先检查 Node.js 版本是否为 22 或更高；不要覆盖已有的同名 Skill，遇到时先告诉我。安装后运行 ugcplay --help 并确认 Skill 文件存在。最后告诉我是否需要重启或重新加载 Agent。此步骤只安装工具，不要登录或上传游戏。
+```
+
+Agent 首次上传前，由用户运行 `ugcplay login` 完成浏览器授权；远程 Agent 可用 `ugcplay login --no-browser`，再由用户在自己的浏览器确认登录。
+
 ## 安装与登录
 
 从 GitHub 获取源码并全局安装（当前 npm 包尚未发布）：
